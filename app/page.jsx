@@ -48,7 +48,19 @@ export default function Home() {
     if (l && Number.isFinite(l.lat)) setLoc(l);
     const r = readLS('su_radius', null);
     if (Number.isFinite(r)) setRadius(r);
-    const fromHash = () => { const t = window.location.hash.replace('#', ''); if (t) setTab(t); };
+    const TABS = ['buscar', 'ofertas', 'achados', 'comunidade', 'mensagens', 'perfil', 'admin'];
+    const fromHash = () => {
+      const t = window.location.hash.replace('#', '');
+      if (TABS.includes(t)) { setTab(t); return; }
+      // volta do link de login do e-mail (#access_token=… ou #error=…)
+      if (t.includes('error_description=')) {
+        const p = new URLSearchParams(t);
+        setToast(/expired|invalid/i.test(p.get('error_code') || p.get('error_description') || '')
+          ? 'O link de login expirou ou já foi usado. Peça um novo.'
+          : 'Não foi possível entrar pelo link. Peça um novo.');
+        history.replaceState(null, '', window.location.pathname);
+      }
+    };
     fromHash();
     window.addEventListener('hashchange', fromHash);
     return () => window.removeEventListener('hashchange', fromHash);

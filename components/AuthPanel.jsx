@@ -51,12 +51,12 @@ export default function AuthPanel({ title = 'Entrar no SearchUp', intro }) {
             <input id="auth-email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="voce@exemplo.com" />
           </label>
           {err ? <p className="err">{err}</p> : null}
-          <button className="btn primary" type="submit" disabled={busy}>{busy ? 'Enviando…' : 'Receber código por e-mail'}</button>
-          <p className="small muted" style={{ margin: 0 }}>Sem senha. Você recebe um código de acesso no e-mail.</p>
+          <button className="btn primary" type="submit" disabled={busy}>{busy ? 'Enviando…' : 'Receber link por e-mail'}</button>
+          <p className="small muted" style={{ margin: 0 }}>Sem senha. Você recebe um link de acesso no e-mail.</p>
         </form>
       ) : (
         <form onSubmit={verify} className="stack">
-          <p className="small" style={{ margin: 0 }}>Enviamos um código para <b>{email}</b>. Ele pode levar um minuto e às vezes cai no spam.</p>
+          <p className="small" style={{ margin: 0 }}>Enviamos um e-mail para <b>{email}</b>. <b>Toque no link do e-mail</b> para entrar, ou digite aqui o código, se o e-mail trouxer um. Pode levar um minuto e às vezes cai no spam.</p>
           <label className="field-l" htmlFor="auth-code">Código
             <input id="auth-code" className="code" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={8} value={code} onChange={(e) => setCode(e.target.value)} />
           </label>

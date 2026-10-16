@@ -20,7 +20,7 @@ function Radar({ stores, radius }) {
       ))}
       <circle cx={cx} cy={cy} r={Math.max(0.5, radius * sc)} fill="color-mix(in srgb, var(--brand) 14%, transparent)" stroke="var(--brand)" strokeWidth="1.5" />
       {stores.map((s) => (
-        <circle key={s.id} cx={cx + s.dx * sc} cy={cy - s.dy * sc} r="4" fill="var(--tag)" stroke="var(--fg)" strokeWidth="1">
+        <circle key={s.id} cx={cx + s.dx * sc} cy={cy - s.dy * sc} r="4" fill="var(--navy)" stroke="var(--snow)" strokeWidth="1">
           <title>{`${s.name} · ${fkm(s.distance_km)}`}</title>
         </circle>
       ))}

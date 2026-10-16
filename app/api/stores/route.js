@@ -39,7 +39,7 @@ export async function GET(request) {
   const radius = Math.min(40, Math.max(0, Number(sp.get('radius')) || 0));
   const type = STORE_TYPES.find((t) => t.key === sp.get('type')) || STORE_TYPES[0];
   const pageToken = sp.get('page') || undefined;
-  const key = process.env.GOOGLE_MAPS_API_KEY;
+  const key = (process.env.GOOGLE_MAPS_API_KEY || '').trim();
 
   if (!key) return Response.json({ stores: [], error: 'not_configured' });
   if (!Number.isFinite(lat) || !Number.isFinite(lng) || radius <= 0) return Response.json({ stores: [] });

@@ -10,7 +10,7 @@ function num(v) {
 }
 
 async function searchYahoo(q) {
-  const appid = process.env.YAHOO_CLIENT_ID;
+  const appid = (process.env.YAHOO_CLIENT_ID || '').trim();
   if (!appid) throw new Error('YAHOO_CLIENT_ID não configurado');
   const url = 'https://shopping.yahooapis.jp/ShoppingWebService/V3/itemSearch?' + new URLSearchParams({
     appid, query: q, results: '30', in_stock: 'true',
@@ -36,10 +36,10 @@ async function searchYahoo(q) {
 }
 
 async function searchRakuten(q) {
-  const applicationId = process.env.RAKUTEN_APP_ID;
-  const accessKey = process.env.RAKUTEN_ACCESS_KEY;
+  const applicationId = (process.env.RAKUTEN_APP_ID || '').trim();
+  const accessKey = (process.env.RAKUTEN_ACCESS_KEY || '').trim();
   if (!applicationId || !accessKey) throw new Error('Chaves do Rakuten não configuradas');
-  const site = (process.env.SITE_URL || 'https://searchup.vercel.app').replace(/\/$/, '');
+  const site = (process.env.SITE_URL || 'https://searchup.vercel.app').trim().replace(/\/$/, '');
   const url = 'https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260701?' + new URLSearchParams({
     applicationId, keyword: q, hits: '30', availability: '1', formatVersion: '2', format: 'json',
   });

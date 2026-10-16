@@ -3,6 +3,7 @@
 // cada busca consulta o Google. Para não sair da cota grátis (5.000/mês),
 // o app conta as buscas do dia no Supabase e para ao chegar no limite.
 import { STORE_TYPES, kmBetween } from '@/lib/constants';
+import { resolveQuery } from '@/lib/resolve';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,11 +40,13 @@ export async function GET(request) {
   const radius = Math.min(40, Math.max(0, Number(sp.get('radius')) || 0));
   const type = STORE_TYPES.find((t) => t.key === sp.get('type')) || STORE_TYPES[0];
   const pageToken = sp.get('page') || undefined;
+  const freeText = (sp.get('q') || '').trim().slice(0, 60); // busca livre: "maquiagem", "トミカ"…
   const key = (process.env.GOOGLE_MAPS_API_KEY || '').trim();
 
   if (!key) return Response.json({ stores: [], error: 'not_configured' });
   if (!Number.isFinite(lat) || !Number.isFinite(lng) || radius <= 0) return Response.json({ stores: [] });
   if (!(await consumeQuota())) return Response.json({ stores: [], error: 'quota' });
+  const textQuery = freeText ? (await resolveQuery(freeText, 'store')).text : type.query;
 
   try {
     const res = await fetch('https://places.googleapis.com/v1/places:searchText', {
@@ -51,7 +54,7 @@ export async function GET(request) {
       cache: 'no-store',
       headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': FIELDS },
       body: JSON.stringify({
-        textQuery: type.query,
+        textQuery,
         languageCode: 'ja',
         regionCode: 'JP',
         pageSize: 20,
@@ -80,7 +83,7 @@ export async function GET(request) {
         source: 'google',
       }))
       .filter((s) => s.distance_km <= radius);
-    return Response.json({ stores, next: data.nextPageToken || null });
+    return Response.json({ stores, next: data.nextPageToken || null, used: textQuery });
   } catch (e) {
     console.error('stores error', e);
     return Response.json({ stores: [], error: 'unavailable' });

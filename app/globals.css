@@ -12,7 +12,7 @@
   color-scheme:light;
 }
 /* superfícies azul-gelo: texto e linhas em azul-marinho */
-.card,.item,.post,.pcard,.store,.chat,.form,.modal,.locked,.authbox,.radar{
+.card,.item,.post,.pcard,.store,.chat,.form,.modal,.locked,.authbox,.radar,.mini{
   --fg:var(--navy); --muted:#46617b; --line:#a8bdd1; --sunk:var(--ice-2); --chip-on:var(--snow);
   color:var(--fg); background:var(--surface);
 }
@@ -189,3 +189,22 @@ textarea{resize:vertical;min-height:70px}
 .gattr{font-family:Roboto,Arial,sans-serif;font-weight:400;font-size:12px;color:#ffffff;white-space:nowrap}
 .foot{margin-top:36px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px;display:grid;gap:4px}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+
+/* busca por categoria */
+.subcats{margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.22)}
+.subsect{margin-top:16px}
+.subhead{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.subhead h3{font-size:16px;margin:0}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:8px}
+@media (min-width:621px){.grid4 .mini:nth-child(n+5){display:none}}
+@media (max-width:620px){
+  .grid4{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+  .grid4 .mini{flex:0 0 40%;scroll-snap-align:start}
+  .chips.scroll{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+  .chips.scroll .chip{flex:0 0 auto}
+}
+.mini{display:flex;flex-direction:column;gap:4px;border:1px solid var(--line);border-radius:var(--r);padding:8px;text-decoration:none;min-width:0}
+.mini img,.mini .ph{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px;background:var(--sunk);display:block}
+.mini .nm{font-size:12px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mini .pr{font-weight:800;font-size:14px}
+.mini:hover{border-color:var(--fg)}

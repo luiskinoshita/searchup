@@ -1,5 +1,7 @@
 // Diagnóstico: mostra só o FORMATO das chaves (nunca o valor) e a resposta
 // do Google e do Rakuten, para descobrir problemas de configuração.
+import { toJapanese } from '@/lib/resolve';
+
 export const dynamic = 'force-dynamic';
 
 function shape(v, prefix) {
@@ -51,7 +53,7 @@ async function testRakuten() {
 }
 
 export async function GET() {
-  const [google, rakuten] = await Promise.all([testGoogle(), testRakuten()]);
+  const [google, rakuten, tr] = await Promise.all([testGoogle(), testRakuten(), toJapanese('carrinho de brinquedo azul')]);
   return Response.json({
     chaves: {
       NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || 'vazio',
@@ -63,5 +65,6 @@ export async function GET() {
     },
     teste_google: google,
     teste_rakuten: rakuten,
+    teste_traducao: tr ? `OK (carrinho de brinquedo azul → ${tr})` : 'desligada (ative a Cloud Translation API no Google Cloud)',
   });
 }

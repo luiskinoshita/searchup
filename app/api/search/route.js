@@ -43,7 +43,7 @@ async function searchRakuten(q, hits = 30) {
   const applicationId = (process.env.RAKUTEN_APP_ID || '').trim();
   const accessKey = (process.env.RAKUTEN_ACCESS_KEY || '').trim();
   if (!applicationId || !accessKey) throw new Error('Chaves do Rakuten não configuradas');
-  const site = (process.env.SITE_URL || 'https://searchup.vercel.app').trim().replace(/\/$/, '');
+  const site = (process.env.SITE_URL || 'https://searchup-idml.vercel.app').trim().replace(/\/$/, '');
   const url = 'https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260701?' + new URLSearchParams({
     applicationId, keyword: q, hits: String(hits), availability: '1', formatVersion: '2', format: 'json',
   });

@@ -92,7 +92,7 @@ export default function MessagesTab({ userId, threads, selectedId, onSelect, onC
 
   return (
     <div>
-      <p className="small muted" style={{ margin: '0 0 12px' }}>Acordos de compra e pagamento são feitos diretamente entre os alunos. O SearchUp não intermedia dinheiro.</p>
+      <p className="small muted" style={{ margin: '0 0 12px' }}>Acordos de compra e pagamento são feitos diretamente entre os alunos. O SnagMap não intermedia dinheiro.</p>
       <div className="mgrid">
         <div className="mlist">
           {threads.length === 0 ? <div className="empty">Nenhuma conversa ainda. Encontre parceiros na aba Comunidade.</div> : null}

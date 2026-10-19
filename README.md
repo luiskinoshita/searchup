@@ -1,4 +1,4 @@
-# SearchUp (beta)
+# SnagMap (beta)
 
 App para os alunos do curso **Do Japão para o Mundo**:
 
@@ -24,9 +24,9 @@ Tecnologia: Next.js (hospedado na Vercel) + Supabase (login, banco, fotos, chat 
    - *Redirect URLs*: adicione o mesmo endereço
 4. **Authentication → Email Templates → Magic Link**: troque o texto do e-mail por algo assim, para o aluno receber um código:
    ```
-   <h2>Seu código do SearchUp</h2>
+   <h2>Seu código do SnagMap</h2>
    <p>Digite este código no app: <b>{{ .Token }}</b></p>
-   <p>Ou clique: <a href="{{ .ConfirmationURL }}">entrar no SearchUp</a></p>
+   <p>Ou clique: <a href="{{ .ConfirmationURL }}">entrar no SnagMap</a></p>
    ```
 
 > O e-mail padrão do Supabase envia poucos e-mails por hora. Para o beta com poucos alunos é suficiente. Para abrir para todos, configure um SMTP próprio em *Authentication → SMTP Settings* (ex.: Resend, SendGrid).

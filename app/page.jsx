@@ -15,6 +15,7 @@ import ProfileTab from '@/components/ProfileTab';
 import AdminTab from '@/components/AdminTab';
 import FindsTab from '@/components/FindsTab';
 import FindForm from '@/components/FindForm';
+import { TAB_ICONS, IconPin } from '@/components/icons';
 
 const STUDENT_TABS = ['ofertas', 'achados', 'comunidade', 'mensagens', 'perfil'];
 
@@ -139,8 +140,8 @@ export default function Home() {
 
   const incoming = threads.filter((x) => x.status === 'pending' && x.incoming).length;
   const tabs = [
-    ['buscar', 'Buscar'], ['ofertas', 'Ofertas dos alunos'], ['achados', 'Achados'], ['comunidade', 'Comunidade'],
-    ['mensagens', 'Mensagens'], ['perfil', 'Meu perfil'], ...(isAdmin ? [['admin', 'Admin']] : []),
+    ['buscar', 'Buscar'], ['ofertas', 'Ofertas'], ['achados', 'Achados'], ['comunidade', 'Comunidade', 'Pessoas'],
+    ['mensagens', 'Mensagens', 'Chat'], ['perfil', 'Perfil'],
   ];
   const needsName = isStudent && profile && !profile.name;
 
@@ -149,7 +150,7 @@ export default function Home() {
     content = <SearchTab loc={loc} radius={radius} isStudent={isStudent} onAddFind={setFindKind}
       onShareStore={(s, type) => setOfferDraft({ store: { name: s.name, lat: s.lat, lng: s.lng }, category: type === 'Usados' ? 'Outros' : type })} />;
   } else if (!supabase) {
-    content = <div className="empty">O SearchUp ainda não foi conectado ao banco de dados. Configure as variáveis do Supabase na Vercel.</div>;
+    content = <div className="empty">O SnagMap ainda não foi conectado ao banco de dados. Configure as variáveis do Supabase na Vercel.</div>;
   } else if (!ready) {
     content = <div className="empty">Carregando…</div>;
   } else if (!session) {
@@ -186,11 +187,17 @@ export default function Home() {
   return (
     <div className="wrap">
       <header className="top">
-        <div className="logo"><h1>Search<span>Up</span></h1><span className="beta">beta</span></div>
+        <div className="row" style={{ gap: 12 }}>
+          <a className="logo" href="#buscar" onClick={(e) => { e.preventDefault(); go('buscar'); }} aria-label="SnagMap — início">
+            <img src="/logo.png" alt="SnagMap" width="119" height="40" />
+          </a>
+          <span className="beta">beta</span>
+        </div>
         <div className="row">
+          {isAdmin ? <button className="btn small" type="button" aria-pressed={tab === 'admin'} onClick={() => go('admin')}>Admin</button> : null}
           {session ? (
             <>
-              <span className="small muted">{profile?.name || status?.email || ''}</span>
+              <span className="small muted who-name">{profile?.name || status?.email || ''}</span>
               <button className="btn ghost small" type="button" onClick={signOut}>Sair</button>
             </>
           ) : supabase ? (
@@ -206,7 +213,7 @@ export default function Home() {
             {loc.key === 'gps' ? <option value="gps">Minha localização</option> : null}
             {CITIES.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
           </select>
-          <button className="btn ghost small" type="button" onClick={locateMe} disabled={gpsBusy}>{gpsBusy ? 'Localizando…' : 'Usar minha localização'}</button>
+          <button className="btn ghost small" type="button" onClick={locateMe} disabled={gpsBusy}>{gpsBusy ? 'Localizando…' : <><IconPin /><span>Perto de mim</span></>}</button>
         </div>
         <div className="rad">
           <label htmlFor="radius">Raio</label>
@@ -217,9 +224,11 @@ export default function Home() {
 
       <div className="tabsbox">
         <nav className="tabs" role="tablist">
-          {tabs.map(([k, l]) => (
+          {tabs.map(([k, l, short]) => (
             <button key={k} role="tab" type="button" aria-selected={tab === k} onClick={() => go(k)}>
-              {l}
+              {(() => { const I = TAB_ICONS[k]; return I ? <I /> : null; })()}
+              <span className={short ? 'lbl-long' : undefined}>{l}</span>
+              {short ? <span className="lbl-short">{short}</span> : null}
               {STUDENT_TABS.includes(k) && !isStudent ? <span className="lock">(alunos)</span> : null}
               {k === 'mensagens' && incoming ? <span className="badge">{incoming}</span> : null}
             </button>
@@ -237,7 +246,8 @@ export default function Home() {
       </main>
 
       <footer className="foot">
-        <span>Acordos de compra e pagamento entre alunos são de responsabilidade deles. O SearchUp não intermedia dinheiro.</span>
+        <span><b style={{ color: 'var(--fg)' }}>SnagMap</b> · Ache ofertas. Compartilhe achados. <span className="hl">Revenda melhor.</span></span>
+        <span>Acordos de compra e pagamento entre alunos são de responsabilidade deles. O SnagMap não intermedia dinheiro.</span>
         <span>
           <a href="https://webservice.rakuten.co.jp/" target="_blank" rel="noopener noreferrer">Supported by Rakuten Developers</a>
           {' · Lojas: '}<span translate="no">Google Maps</span>

@@ -1,5 +1,5 @@
 -- =====================================================================
--- SearchUp — banco de dados (Supabase)
+-- SnagMap — banco de dados (Supabase)
 -- Como usar: Supabase > SQL Editor > New query > cole tudo > Run.
 -- Rode uma vez só, num projeto novo.
 -- =====================================================================

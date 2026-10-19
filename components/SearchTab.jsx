@@ -16,17 +16,17 @@ function Radar({ stores, radius }) {
     <svg viewBox="0 0 240 240" role="img" aria-label="Lojas em volta do ponto de busca">
       {rings.map((k) => (
         <g key={k}>
-          <circle cx={cx} cy={cy} r={k * sc} fill="none" stroke="var(--line)" strokeWidth="1" />
+          <circle cx={cx} cy={cy} r={k * sc} fill="none" stroke="var(--slate)" strokeOpacity=".45" strokeWidth="1" />
           <text x={cx + 3} y={cy - k * sc + 11} fontSize="9" fill="var(--muted)">{k}</text>
         </g>
       ))}
-      <circle cx={cx} cy={cy} r={Math.max(0.5, radius * sc)} fill="color-mix(in srgb, var(--brand) 14%, transparent)" stroke="var(--brand)" strokeWidth="1.5" />
+      <circle cx={cx} cy={cy} r={Math.max(0.5, radius * sc)} fill="color-mix(in srgb, var(--orange) 10%, transparent)" stroke="var(--orange)" strokeWidth="1.5" strokeDasharray="4 3" />
       {stores.map((s) => (
-        <circle key={s.id} cx={cx + s.dx * sc} cy={cy - s.dy * sc} r="4" fill="var(--navy)" stroke="var(--snow)" strokeWidth="1">
+        <circle key={s.id} cx={cx + s.dx * sc} cy={cy - s.dy * sc} r="4" fill="var(--orange)" stroke="#fff" strokeWidth="1.5">
           <title>{`${s.name} · ${fkm(s.distance_km)}`}</title>
         </circle>
       ))}
-      <circle cx={cx} cy={cy} r="4" fill="var(--hot)" />
+      <circle cx={cx} cy={cy} r="5" fill="var(--charcoal)" stroke="#fff" strokeWidth="2" />
     </svg>
   );
 }
@@ -262,6 +262,12 @@ export default function SearchTab({ loc, radius, isStudent, onShareStore, onAddF
   return (
     <div className="sgrid">
       <div style={{ minWidth: 0 }}>
+        {mode === 'idle' ? (
+          <div className="hero">
+            <h2>Ache ofertas. Compartilhe achados. <span className="hl">Revenda melhor.</span></h2>
+            <p className="muted">Preços online e lojas perto de você, em português ou japonês.</p>
+          </div>
+        ) : null}
         <form className="sbox" onSubmit={(e) => { e.preventDefault(); runSearch(); }}>
           <input id="q" type="text" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Ex.: maquiagem, carrinho de brinquedo, ポケモンカード" aria-label="Buscar produto ou categoria" />
           <button className="btn primary" type="submit" disabled={loading}>{loading ? 'Buscando…' : 'Buscar'}</button>

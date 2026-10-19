@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
-export default function AuthPanel({ title = 'Entrar no SearchUp', intro }) {
+export default function AuthPanel({ title = 'Entrar no SnagMap', intro }) {
   const [step, setStep] = useState('email');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');

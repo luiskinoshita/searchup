@@ -11,7 +11,7 @@ export default function RequestModal({ target, myProfile, onClose, onSent }) {
     ? `Oi ${fn}! Eu também trabalho com ${common.join(' e ').toLowerCase()}. Topa conversar sobre uma parceria?`
     : target.buys_for_others
       ? `Oi ${fn}! Vi que você compra para outros alunos. Queria saber se consegue comprar um item pra mim.`
-      : `Oi ${fn}! Vi você no SearchUp e queria trocar uma ideia sobre parceria.`;
+      : `Oi ${fn}! Vi você no SnagMap e queria trocar uma ideia sobre parceria.`;
   const [text, setText] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');

@@ -74,6 +74,8 @@ export default function SearchTab({ loc, radius, isStudent, onShareStore, onAddF
   const [studentFinds, setStudentFinds] = useState([]);
   const cache = useRef(new Map()); // guarda resultados só enquanto a página está aberta
   const searchSeq = useRef(0);
+  const [ebay, setEbay] = useState(null); // resultado do eBay para a busca atual
+  const [ebayLoading, setEbayLoading] = useState(false);
   const loaded = useRef(new Set()); // subtítulos já pedidos na categoria aberta
   const [catRun, setCatRun] = useState(0); // muda a cada vez que uma categoria é aberta
   const catRunRef = useRef(0);
@@ -81,8 +83,22 @@ export default function SearchTab({ loc, radius, isStudent, onShareStore, onAddF
 
   const cat = catKey ? findCategory(catKey) : null;
 
-  async function fetchList(params, label) {
+  async function loadEbay(label, en, seq) {
+    setEbay(null);
+    setEbayLoading(true);
+    try {
+      const res = await fetch('/api/ebay?' + new URLSearchParams({ q: label, ...(en ? { en } : {}) }));
+      const data = await res.json();
+      if (seq === searchSeq.current) setEbay(data);
+    } catch {
+      if (seq === searchSeq.current) setEbay({ error: 'unavailable', items: [] });
+    }
+    if (seq === searchSeq.current) setEbayLoading(false);
+  }
+
+  async function fetchList(params, label, en) {
     const seq = ++searchSeq.current;
+    loadEbay(label, en, seq);
     setMode('list');
     setLastQ(label);
     setLoading(true);
@@ -121,7 +137,7 @@ export default function SearchTab({ loc, radius, isStudent, onShareStore, onAddF
     setSubLabel(s.label);
     if (!typed) setQ(s.label);
     setStoreInput(s.label);
-    fetchList({ q: s.label, kw: s.kw }, s.label);
+    fetchList({ q: s.label, kw: s.kw }, s.label, s.en);
   }
 
   function runSearch(term) {
@@ -150,7 +166,7 @@ export default function SearchTab({ loc, radius, isStudent, onShareStore, onAddF
         setGroups((g) => ({ ...g, [s.label]: { state: 'loading', items: [] } }));
         let next;
         try {
-          const res = await fetch('/api/search?' + new URLSearchParams({ q: s.label, kw: s.kw, hits: '12' }));
+          const res = await fetch('/api/search?' + new URLSearchParams({ q: s.label, kw: s.kw, hits: '12', books: '0' }));
           const data = await res.json();
           const list = (data.items || []).sort((a, b) => a.price - b.price);
           next = { state: data.errors?.length && !list.length ? 'error' : 'done', items: list };
@@ -390,7 +406,7 @@ export default function SearchTab({ loc, radius, isStudent, onShareStore, onAddF
                       <div style={{ minWidth: 0 }}>
                         <h3>{i.name}</h3>
                         <div className="meta">
-                          <span className="pill">{i.source === 'yahoo' ? 'Yahoo!' : 'Rakuten'}</span>
+                          <span className="pill">{i.source === 'yahoo' ? 'Yahoo!' : i.source === 'rakuten_books' ? '楽天ブックス' : '楽天市場'}</span>
                           <span className="small muted">{i.shop}</span>
                           {i.shipping ? <span className="pill ok">{i.shipping}</span> : null}
                           {cheapest === i ? <span className="pill warn">Menor preço</span> : null}
@@ -409,6 +425,53 @@ export default function SearchTab({ loc, radius, isStudent, onShareStore, onAddF
             </>
           )}
         </section>
+
+        {mode === 'list' ? (
+          <section className="sect">
+            <div className="row between">
+              <h2>Revenda lá fora · eBay</h2>
+              {ebay?.soldUrl ? <a className="btn small" href={ebay.soldUrl} target="_blank" rel="noopener noreferrer">Ver vendidos no eBay ↗</a> : null}
+            </div>
+            {ebayLoading ? (
+              <p className="small muted">Buscando no eBay…</p>
+            ) : !ebay ? null : ebay.configured === false ? (
+              <div className="empty" style={{ marginTop: 8 }}>Em breve: preço de revenda no eBay direto aqui. Por enquanto, toque em “Ver vendidos no eBay” para ver por quanto esse produto já foi vendido lá fora.</div>
+            ) : ebay.error ? (
+              <p className="small muted">O eBay não respondeu agora. Use o botão “Ver vendidos no eBay”.</p>
+            ) : ebay.items?.length ? (
+              <>
+                <div className="ebaysum card">
+                  <div>
+                    <span className="eyebrow">Preço típico no eBay (EUA)</span>
+                    <div className="big num">US$ {Math.round(ebay.medianUsd)}{ebay.medianJpy ? <small> ≈ {yen(ebay.medianJpy)}</small> : null}</div>
+                  </div>
+                  {cheapest && ebay.medianJpy ? (
+                    <div>
+                      <span className="eyebrow">Diferença para o menor preço no Japão</span>
+                      <div className={'big num ' + (ebay.medianJpy - cheapest.price > 0 ? 'pos' : 'neg')}>
+                        {ebay.medianJpy - cheapest.price > 0 ? '+' : '−'}{yen(Math.abs(ebay.medianJpy - cheapest.price))}
+                      </div>
+                    </div>
+                  ) : null}
+                  <p className="small muted" style={{ margin: 0, gridColumn: '1/-1' }}>
+                    Mediana dos anúncios ativos para “<span lang="en">{ebay.query}</span>”. Antes das taxas do eBay e do frete internacional. Confira se é o mesmo produto.
+                  </p>
+                </div>
+                <div className="grid4">
+                  {ebay.items.slice(0, 8).map((i, idx) => (
+                    <a key={i.url + idx} className="mini" href={i.url} target="_blank" rel="noopener noreferrer">
+                      {i.image ? <img src={i.image} alt="" loading="lazy" /> : <div className="ph" />}
+                      <span className="nm">{i.name}</span>
+                      <span className="pr num">US$ {i.usd.toFixed(0)}{i.price ? <small className="muted"> ≈ {yen(i.price)}</small> : null}</span>
+                    </a>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <p className="small muted">Nenhum anúncio no eBay para “{ebay.query}”.</p>
+            )}
+          </section>
+        ) : null}
 
         <section className="sect">
           <div className="row between">

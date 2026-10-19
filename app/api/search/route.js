@@ -78,6 +78,39 @@ async function searchRakuten(q, hits = 30) {
   }).filter((i) => i.price && i.url);
 }
 
+// 楽天ブックス: livros, mangás, games, CDs/DVDs (mesma chave do Rakuten)
+async function searchRakutenBooks(q, hits = 10) {
+  const applicationId = (process.env.RAKUTEN_APP_ID || '').trim();
+  const accessKey = (process.env.RAKUTEN_ACCESS_KEY || '').trim();
+  if (!applicationId || !accessKey) throw new Error('Chaves do Rakuten não configuradas');
+  const site = (process.env.SITE_URL || 'https://searchup-idml.vercel.app').trim().replace(/\/$/, '');
+  const url = 'https://openapi.rakuten.co.jp/services/api/BooksTotal/Search/20170404?' + new URLSearchParams({
+    applicationId, keyword: q, hits: String(hits), availability: '0', outOfStockFlag: '0', formatVersion: '2', format: 'json',
+  });
+  let res;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    res = await fetch(url, { headers: { accessKey, Referer: site + '/', Origin: site }, next: { revalidate: CACHE_SECONDS } });
+    if (res.status !== 429) break;
+    await wait(1100 * (attempt + 1));
+  }
+  if (res.status === 404) return []; // nada encontrado
+  if (!res.ok) throw new Error('Rakuten Books respondeu ' + res.status);
+  const data = await res.json();
+  return (data.Items || data.items || []).map((raw) => {
+    const it = raw.Item || raw.item || raw;
+    return {
+      source: 'rakuten_books',
+      name: it.title,
+      price: num(it.itemPrice),
+      regularPrice: null,
+      url: it.itemUrl,
+      image: it.largeImageUrl || it.mediumImageUrl || null,
+      shop: '',
+      shipping: Number(it.postageFlag) >= 1 ? 'Frete grátis' : '',
+    };
+  }).filter((i) => i.price && i.url);
+}
+
 export async function GET(request) {
   const sp = new URL(request.url).searchParams;
   const q = (sp.get('q') || '').trim().slice(0, 80);
@@ -90,11 +123,17 @@ export async function GET(request) {
 
   // O Yahoo é opcional: só entra se YAHOO_CLIENT_ID estiver configurado
   const useYahoo = !!process.env.YAHOO_CLIENT_ID;
-  const [y, r] = await Promise.allSettled([useYahoo ? searchYahoo(used) : Promise.resolve([]), searchRakuten(used, hits)]);
+  const useBooks = sp.get('books') !== '0';
+  const [y, r, b] = await Promise.allSettled([
+    useYahoo ? searchYahoo(used) : Promise.resolve([]),
+    searchRakuten(used, hits),
+    useBooks ? wait(350).then(() => searchRakutenBooks(used, 10)) : Promise.resolve([]),
+  ]);
   const items = [];
   const errors = [];
   if (y.status === 'fulfilled') items.push(...y.value); else errors.push({ source: 'yahoo', message: y.reason?.message });
   if (r.status === 'fulfilled') items.push(...r.value); else errors.push({ source: 'rakuten', message: r.reason?.message });
+  if (b.status === 'fulfilled') items.push(...b.value); else console.error('rakuten books', b.reason?.message);
 
   // tradução automática trouxe pouco? tenta também o texto original
   if (resolved.how === 'translated' && items.length < 5 && q) {

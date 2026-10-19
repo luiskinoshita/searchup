@@ -31,6 +31,12 @@ function Radar({ stores, radius }) {
   );
 }
 
+// Link de busca na Amazon Japão (sem API). Se houver ID de Associado, entra no link.
+function amazonUrl(q) {
+  const tag = (process.env.NEXT_PUBLIC_AMAZON_TAG || '').trim();
+  return 'https://www.amazon.co.jp/s?' + new URLSearchParams({ k: q, ...(tag ? { tag } : {}) });
+}
+
 function MiniItem({ i }) {
   return (
     <a className="mini" href={i.url} target="_blank" rel="noopener noreferrer">
@@ -344,7 +350,10 @@ export default function SearchTab({ loc, radius, isStudent, onShareStore, onAddF
                   <div key={s.label} className="subsect">
                     <div className="subhead">
                       <h3>{s.label}</h3>
-                      <button type="button" className="btn small ghost" onClick={() => openSub(cat, s)}>Ver todos</button>
+                      <div className="row" style={{ gap: 6 }}>
+                        <a className="btn small ghost" href={amazonUrl(s.kw)} target="_blank" rel="noopener noreferrer sponsored">Amazon</a>
+                        <button type="button" className="btn small ghost" onClick={() => openSub(cat, s)}>Ver todos</button>
+                      </div>
                     </div>
                     {!g || g.state === 'loading' ? (
                       <p className="small muted" style={{ margin: '6px 0 0' }}>Carregando…</p>
@@ -364,7 +373,12 @@ export default function SearchTab({ loc, radius, isStudent, onShareStore, onAddF
             </>
           ) : (
             <>
-              {used && used !== lastQ && !loading ? <p className="small muted" style={{ margin: '4px 0 0' }}>Buscando no Rakuten como <b lang="ja">{used}</b></p> : null}
+              <div className="row between" style={{ marginTop: 4 }}>
+                {used && used !== lastQ && !loading ? <p className="small muted" style={{ margin: 0 }}>Buscando no Rakuten como <b lang="ja">{used}</b></p> : <span />}
+                {lastQ && !loading ? (
+                  <a className="btn small" href={amazonUrl(used || lastQ)} target="_blank" rel="noopener noreferrer sponsored">Ver também na Amazon ↗</a>
+                ) : null}
+              </div>
               {errors.length ? <p className="small" style={{ color: 'var(--warn)' }}>Não foi possível consultar {errors.map((e) => (e === 'yahoo' ? 'Yahoo' : 'Rakuten')).join(' e ')} agora.</p> : null}
               {loading ? (
                 <div className="empty" style={{ marginTop: 8 }}>Buscando preços…</div>

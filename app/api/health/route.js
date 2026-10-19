@@ -70,8 +70,26 @@ async function testRakuten() {
   }
 }
 
+async function testRakutenBooks() {
+  const applicationId = (process.env.RAKUTEN_APP_ID || '').trim();
+  const accessKey = (process.env.RAKUTEN_ACCESS_KEY || '').trim();
+  if (!applicationId || !accessKey) return 'sem chave';
+  const site = (process.env.SITE_URL || '').trim().replace(/\/$/, '');
+  try {
+    const url = 'https://openapi.rakuten.co.jp/services/api/BooksTotal/Search/20170404?' + new URLSearchParams({
+      applicationId, keyword: 'ワンピース', hits: '1', formatVersion: '2', format: 'json',
+    });
+    const res = await fetch(url, { cache: 'no-store', headers: { accessKey, Referer: site + '/', Origin: site } });
+    const text = await res.text();
+    if (res.ok) return 'OK ' + text.slice(0, 120);
+    return `${res.status}: ${text.replace(applicationId, '[id]').replace(accessKey, '[key]').slice(0, 300)}`;
+  } catch (err) {
+    return 'falha de rede: ' + err.message;
+  }
+}
+
 export async function GET() {
-  const [google, rakuten, tr] = await Promise.all([testGoogle(), testRakuten(), testTranslate()]);
+  const [google, rakuten, tr, books] = await Promise.all([testGoogle(), testRakuten(), testTranslate(), testRakutenBooks()]);
   return Response.json({
     chaves: {
       NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || 'vazio',
@@ -84,5 +102,6 @@ export async function GET() {
     teste_google: google,
     teste_rakuten: rakuten,
     teste_traducao: tr,
+    teste_rakuten_books: books,
   });
 }

@@ -31,12 +31,6 @@ function Radar({ stores, radius }) {
   );
 }
 
-// Link de busca na Amazon Japão (sem API). Se houver ID de Associado, entra no link.
-function amazonUrl(q) {
-  const tag = (process.env.NEXT_PUBLIC_AMAZON_TAG || '').trim();
-  return 'https://www.amazon.co.jp/s?' + new URLSearchParams({ k: q, ...(tag ? { tag } : {}) });
-}
-
 function MiniItem({ i }) {
   return (
     <a className="mini" href={i.url} target="_blank" rel="noopener noreferrer">
@@ -74,8 +68,6 @@ export default function SearchTab({ loc, radius, isStudent, onShareStore, onAddF
   const [studentFinds, setStudentFinds] = useState([]);
   const cache = useRef(new Map()); // guarda resultados só enquanto a página está aberta
   const searchSeq = useRef(0);
-  const [ebay, setEbay] = useState(null); // resultado do eBay para a busca atual
-  const [ebayLoading, setEbayLoading] = useState(false);
   const loaded = useRef(new Set()); // subtítulos já pedidos na categoria aberta
   const [catRun, setCatRun] = useState(0); // muda a cada vez que uma categoria é aberta
   const catRunRef = useRef(0);
@@ -83,22 +75,8 @@ export default function SearchTab({ loc, radius, isStudent, onShareStore, onAddF
 
   const cat = catKey ? findCategory(catKey) : null;
 
-  async function loadEbay(label, en, seq) {
-    setEbay(null);
-    setEbayLoading(true);
-    try {
-      const res = await fetch('/api/ebay?' + new URLSearchParams({ q: label, ...(en ? { en } : {}) }));
-      const data = await res.json();
-      if (seq === searchSeq.current) setEbay(data);
-    } catch {
-      if (seq === searchSeq.current) setEbay({ error: 'unavailable', items: [] });
-    }
-    if (seq === searchSeq.current) setEbayLoading(false);
-  }
-
-  async function fetchList(params, label, en) {
+  async function fetchList(params, label) {
     const seq = ++searchSeq.current;
-    loadEbay(label, en, seq);
     setMode('list');
     setLastQ(label);
     setLoading(true);
@@ -137,7 +115,7 @@ export default function SearchTab({ loc, radius, isStudent, onShareStore, onAddF
     setSubLabel(s.label);
     if (!typed) setQ(s.label);
     setStoreInput(s.label);
-    fetchList({ q: s.label, kw: s.kw }, s.label, s.en);
+    fetchList({ q: s.label, kw: s.kw }, s.label);
   }
 
   function runSearch(term) {
@@ -366,10 +344,7 @@ export default function SearchTab({ loc, radius, isStudent, onShareStore, onAddF
                   <div key={s.label} className="subsect">
                     <div className="subhead">
                       <h3>{s.label}</h3>
-                      <div className="row" style={{ gap: 6 }}>
-                        <a className="btn small ghost" href={amazonUrl(s.kw)} target="_blank" rel="noopener noreferrer sponsored">Amazon</a>
-                        <button type="button" className="btn small ghost" onClick={() => openSub(cat, s)}>Ver todos</button>
-                      </div>
+                      <button type="button" className="btn small ghost" onClick={() => openSub(cat, s)}>Ver todos</button>
                     </div>
                     {!g || g.state === 'loading' ? (
                       <p className="small muted" style={{ margin: '6px 0 0' }}>Carregando…</p>
@@ -391,9 +366,6 @@ export default function SearchTab({ loc, radius, isStudent, onShareStore, onAddF
             <>
               <div className="row between" style={{ marginTop: 4 }}>
                 {used && used !== lastQ && !loading ? <p className="small muted" style={{ margin: 0 }}>Buscando no Rakuten como <b lang="ja">{used}</b></p> : <span />}
-                {lastQ && !loading ? (
-                  <a className="btn small" href={amazonUrl(used || lastQ)} target="_blank" rel="noopener noreferrer sponsored">Ver também na Amazon ↗</a>
-                ) : null}
               </div>
               {errors.length ? <p className="small" style={{ color: 'var(--warn)' }}>Não foi possível consultar {errors.map((e) => (e === 'yahoo' ? 'Yahoo' : 'Rakuten')).join(' e ')} agora.</p> : null}
               {loading ? (
@@ -425,53 +397,6 @@ export default function SearchTab({ loc, radius, isStudent, onShareStore, onAddF
             </>
           )}
         </section>
-
-        {mode === 'list' ? (
-          <section className="sect">
-            <div className="row between">
-              <h2>Revenda lá fora · eBay</h2>
-              {ebay?.soldUrl ? <a className="btn small" href={ebay.soldUrl} target="_blank" rel="noopener noreferrer">Ver vendidos no eBay ↗</a> : null}
-            </div>
-            {ebayLoading ? (
-              <p className="small muted">Buscando no eBay…</p>
-            ) : !ebay ? null : ebay.configured === false ? (
-              <div className="empty" style={{ marginTop: 8 }}>Em breve: preço de revenda no eBay direto aqui. Por enquanto, toque em “Ver vendidos no eBay” para ver por quanto esse produto já foi vendido lá fora.</div>
-            ) : ebay.error ? (
-              <p className="small muted">O eBay não respondeu agora. Use o botão “Ver vendidos no eBay”.</p>
-            ) : ebay.items?.length ? (
-              <>
-                <div className="ebaysum card">
-                  <div>
-                    <span className="eyebrow">Preço típico no eBay (EUA)</span>
-                    <div className="big num">US$ {Math.round(ebay.medianUsd)}{ebay.medianJpy ? <small> ≈ {yen(ebay.medianJpy)}</small> : null}</div>
-                  </div>
-                  {cheapest && ebay.medianJpy ? (
-                    <div>
-                      <span className="eyebrow">Diferença para o menor preço no Japão</span>
-                      <div className={'big num ' + (ebay.medianJpy - cheapest.price > 0 ? 'pos' : 'neg')}>
-                        {ebay.medianJpy - cheapest.price > 0 ? '+' : '−'}{yen(Math.abs(ebay.medianJpy - cheapest.price))}
-                      </div>
-                    </div>
-                  ) : null}
-                  <p className="small muted" style={{ margin: 0, gridColumn: '1/-1' }}>
-                    Mediana dos anúncios ativos para “<span lang="en">{ebay.query}</span>”. Antes das taxas do eBay e do frete internacional. Confira se é o mesmo produto.
-                  </p>
-                </div>
-                <div className="grid4">
-                  {ebay.items.slice(0, 8).map((i, idx) => (
-                    <a key={i.url + idx} className="mini" href={i.url} target="_blank" rel="noopener noreferrer">
-                      {i.image ? <img src={i.image} alt="" loading="lazy" /> : <div className="ph" />}
-                      <span className="nm">{i.name}</span>
-                      <span className="pr num">US$ {i.usd.toFixed(0)}{i.price ? <small className="muted"> ≈ {yen(i.price)}</small> : null}</span>
-                    </a>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <p className="small muted">Nenhum anúncio no eBay para “{ebay.query}”.</p>
-            )}
-          </section>
-        ) : null}
 
         <section className="sect">
           <div className="row between">

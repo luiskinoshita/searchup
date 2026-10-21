@@ -31,6 +31,34 @@ function Radar({ stores, radius }) {
   );
 }
 
+// Lojas sem API: o botão abre a busca do próprio site com a palavra em japonês
+const STORE_LINKS = [
+  { name: 'メルカリ', url: (q) => 'https://jp.mercari.com/search?keyword=' + encodeURIComponent(q) },
+  { name: 'ヤフオク!', url: (q) => 'https://auctions.yahoo.co.jp/search/search?p=' + encodeURIComponent(q) },
+  { name: 'ラクマ', url: (q) => 'https://fril.jp/s?query=' + encodeURIComponent(q) },
+  { name: 'Yahoo!フリマ', url: (q) => 'https://paypayfleamarket.yahoo.co.jp/search/' + encodeURIComponent(q) },
+  { name: '駿河屋', url: (q) => 'https://www.suruga-ya.jp/search?search_word=' + encodeURIComponent(q) },
+  { name: 'ブックオフ', url: (q) => 'https://shopping.bookoff.co.jp/search/keyword/' + encodeURIComponent(q) },
+  { name: 'オフモール', url: (q) => 'https://netmall.hardoff.co.jp/search/?q=' + encodeURIComponent(q) },
+  { name: 'ヨドバシ', url: (q) => 'https://www.yodobashi.com/?word=' + encodeURIComponent(q) },
+  { name: 'ビックカメラ', url: (q) => 'https://www.biccamera.com/bc/category/?q=' + encodeURIComponent(q) },
+  { name: 'ポケモンセンター', url: (q) => 'https://www.pokemoncenter-online.com/search/?q=' + encodeURIComponent(q) },
+];
+
+function StoreLinks({ q }) {
+  if (!q) return null;
+  return (
+    <div className="extlinks">
+      <span className="eyebrow">Procurar também em</span>
+      <div className="chips scroll" style={{ marginTop: 6 }}>
+        {STORE_LINKS.map((s) => (
+          <a key={s.name} className="chip ext" href={s.url(q)} target="_blank" rel="noopener noreferrer" lang="ja">{s.name} ↗</a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function MiniItem({ i }) {
   return (
     <a className="mini" href={i.url} target="_blank" rel="noopener noreferrer">
@@ -68,6 +96,8 @@ export default function SearchTab({ loc, radius, isStudent, onShareStore, onAddF
   const [studentFinds, setStudentFinds] = useState([]);
   const cache = useRef(new Map()); // guarda resultados só enquanto a página está aberta
   const searchSeq = useRef(0);
+  const [ranking, setRanking] = useState({ state: 'idle', items: [] }); // "Em alta" da categoria
+  const [products, setProducts] = useState([]); // "Comparar preços"
   const loaded = useRef(new Set()); // subtítulos já pedidos na categoria aberta
   const [catRun, setCatRun] = useState(0); // muda a cada vez que uma categoria é aberta
   const catRunRef = useRef(0);
@@ -75,8 +105,30 @@ export default function SearchTab({ loc, radius, isStudent, onShareStore, onAddF
 
   const cat = catKey ? findCategory(catKey) : null;
 
+  async function loadProducts(params, seq) {
+    setProducts([]);
+    try {
+      const res = await fetch('/api/products?' + new URLSearchParams(params));
+      const data = await res.json();
+      if (seq === searchSeq.current) setProducts(data.products || []);
+    } catch { /* sem comparação */ }
+  }
+
+  async function loadRanking(genre) {
+    if (!genre) { setRanking({ state: 'idle', items: [] }); return; }
+    setRanking({ state: 'loading', items: [] });
+    try {
+      const res = await fetch('/api/ranking?genre=' + genre);
+      const data = await res.json();
+      setRanking({ state: data.error ? 'error' : 'done', items: data.items || [] });
+    } catch {
+      setRanking({ state: 'error', items: [] });
+    }
+  }
+
   async function fetchList(params, label) {
     const seq = ++searchSeq.current;
+    loadProducts(params, seq);
     setMode('list');
     setLastQ(label);
     setLoading(true);
@@ -108,6 +160,7 @@ export default function SearchTab({ loc, radius, isStudent, onShareStore, onAddF
     setVisible(SECTIONS_STEP);
     setLoading(false);
     setStoreInput(c.label);
+    loadRanking(c.genre);
   }
 
   function openSub(c, s, typed) {
@@ -338,6 +391,30 @@ export default function SearchTab({ loc, radius, isStudent, onShareStore, onAddF
             <div className="empty" style={{ marginTop: 8 }}>Escreva o que procura (pode ser em português, como “maquiagem” ou “carrinho de brinquedo”) ou toque numa categoria.</div>
           ) : mode === 'cat' && cat ? (
             <>
+              {ranking.state !== 'idle' ? (
+                <div className="subsect">
+                  <div className="subhead">
+                    <h3>🔥 Em alta no 楽天市場</h3>
+                    <a className="btn small ghost" href={`https://ranking.rakuten.co.jp/daily/${cat.genre}/`} target="_blank" rel="noopener noreferrer">Ranking completo ↗</a>
+                  </div>
+                  {ranking.state === 'loading' ? (
+                    <p className="small muted" style={{ margin: '6px 0 0' }}>Carregando os mais vendidos…</p>
+                  ) : ranking.items.length ? (
+                    <div className="grid4">
+                      {ranking.items.slice(0, 8).map((i) => (
+                        <a key={i.url} className="mini" href={i.url} target="_blank" rel="noopener noreferrer">
+                          <span className="rankbadge num">#{i.rank}</span>
+                          {i.image ? <img src={i.image} alt="" loading="lazy" /> : <div className="ph" />}
+                          <span className="nm">{i.name}</span>
+                          <span className="pr num">{yen(i.price)}</span>
+                        </a>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="small muted" style={{ margin: '6px 0 0' }}>Ranking indisponível agora.</p>
+                  )}
+                </div>
+              ) : null}
               {cat.subs.slice(0, visible).map((s) => {
                 const g = groups[s.label];
                 return (
@@ -361,12 +438,37 @@ export default function SearchTab({ loc, radius, isStudent, onShareStore, onAddF
                   Mostrar mais subcategorias ({cat.subs.length - visible})
                 </button>
               ) : null}
+              <StoreLinks q={cat.aliases.find((a) => /[\u3040-\u30ff\u3400-\u9fff]/.test(a)) || cat.store} />
             </>
           ) : (
             <>
               <div className="row between" style={{ marginTop: 4 }}>
                 {used && used !== lastQ && !loading ? <p className="small muted" style={{ margin: 0 }}>Buscando no Rakuten como <b lang="ja">{used}</b></p> : <span />}
               </div>
+              {products.length && !loading ? (
+                <div className="compare">
+                  <div className="subhead"><h3>Comparar preços entre lojas</h3><span className="pill brand">楽天 製品</span></div>
+                  <div className="list">
+                    {products.map((p) => (
+                      <a key={p.id || p.url} className="store cmp" href={p.url} target="_blank" rel="noopener noreferrer">
+                        {p.image ? <img className="thumb" src={p.image} alt="" loading="lazy" /> : <div className="thumb" />}
+                        <div style={{ minWidth: 0 }}>
+                          <b>{p.name}</b>
+                          <div className="meta">
+                            <span className="pill">{p.shops} lojas</span>
+                            {p.avg ? <span className="small muted num">média {yen(p.avg)}</span> : null}
+                          </div>
+                        </div>
+                        <div className="act">
+                          <span className="small muted">a partir de</span>
+                          <span className="price num">{yen(p.min)}</span>
+                          {p.max && p.max > p.min ? <span className="small muted num">até {yen(p.max)}</span> : null}
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
               {errors.length ? <p className="small" style={{ color: 'var(--warn)' }}>Não foi possível consultar {errors.map((e) => (e === 'yahoo' ? 'Yahoo' : 'Rakuten')).join(' e ')} agora.</p> : null}
               {loading ? (
                 <div className="empty" style={{ marginTop: 8 }}>Buscando preços…</div>
@@ -394,6 +496,7 @@ export default function SearchTab({ loc, radius, isStudent, onShareStore, onAddF
               ) : (
                 <div className="empty" style={{ marginTop: 8 }}>Nada encontrado para “{lastQ}”. Tente outra palavra, escolha uma categoria ou baixe o preço mínimo.</div>
               )}
+              {!loading ? <StoreLinks q={used || lastQ} /> : null}
             </>
           )}
         </section>

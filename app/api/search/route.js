@@ -37,6 +37,9 @@ async function searchYahoo(q) {
   }).filter((i) => i.price && i.url);
 }
 
+// ID de afiliado do Rakuten (opcional): os links passam a gerar comissão
+const aff = () => { const id = (process.env.RAKUTEN_AFFILIATE_ID || '').trim(); return id ? { affiliateId: id } : {}; };
+
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function searchRakuten(q, hits = 30) {
@@ -45,7 +48,7 @@ async function searchRakuten(q, hits = 30) {
   if (!applicationId || !accessKey) throw new Error('Chaves do Rakuten não configuradas');
   const site = (process.env.SITE_URL || 'https://searchup-idml.vercel.app').trim().replace(/\/$/, '');
   const url = 'https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260701?' + new URLSearchParams({
-    applicationId, keyword: q, hits: String(hits), availability: '1', formatVersion: '2', format: 'json',
+    applicationId, keyword: q, hits: String(hits), availability: '1', formatVersion: '2', format: 'json', ...aff(),
   });
   // o Rakuten aceita poucas buscas por segundo: se reclamar (429), espera e tenta de novo
   let res;
@@ -70,7 +73,7 @@ async function searchRakuten(q, hits = 30) {
       name: it.itemName,
       price: num(it.itemPrice),
       regularPrice: null,
-      url: it.itemUrl,
+      url: it.affiliateUrl || it.itemUrl,
       image,
       shop: it.shopName || '',
       shipping: [it.postageFlag === 0 ? 'Frete incluso' : '', points].filter(Boolean).join(' · '),
@@ -85,7 +88,7 @@ async function searchRakutenBooks(q, hits = 10) {
   if (!applicationId || !accessKey) throw new Error('Chaves do Rakuten não configuradas');
   const site = (process.env.SITE_URL || 'https://searchup-idml.vercel.app').trim().replace(/\/$/, '');
   const url = 'https://openapi.rakuten.co.jp/services/api/BooksTotal/Search/20170404?' + new URLSearchParams({
-    applicationId, keyword: q, hits: String(hits), availability: '0', outOfStockFlag: '0', formatVersion: '2', format: 'json',
+    applicationId, keyword: q, hits: String(hits), availability: '0', outOfStockFlag: '0', formatVersion: '2', format: 'json', ...aff(),
   });
   let res;
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -103,7 +106,7 @@ async function searchRakutenBooks(q, hits = 10) {
       name: it.title,
       price: num(it.itemPrice),
       regularPrice: null,
-      url: it.itemUrl,
+      url: it.affiliateUrl || it.itemUrl,
       image: it.largeImageUrl || it.mediumImageUrl || null,
       shop: '',
       shipping: Number(it.postageFlag) >= 1 ? 'Frete grátis' : '',

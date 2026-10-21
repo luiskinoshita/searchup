@@ -260,3 +260,15 @@ textarea{resize:vertical;min-height:70px}
 .ebaysum .big small{font-size:14px;font-weight:500;color:var(--muted);margin-left:4px}
 .ebaysum .pos{color:var(--ok)} .ebaysum .neg{color:var(--hot)}
 .mini .pr small{font-weight:500;font-size:11px}
+
+/* ranking, comparação e links externos */
+.mini{position:relative}
+.rankbadge{position:absolute;top:12px;left:12px;z-index:1;background:var(--orange);color:#fff;font-weight:700;font-size:12px;border-radius:999px;padding:1px 8px;box-shadow:0 2px 6px rgba(17,24,39,.2)}
+.compare{margin-top:10px}
+.compare .list{margin-top:6px}
+.store.cmp{grid-template-columns:58px minmax(0,1fr) auto;text-decoration:none;color:var(--fg)}
+.store.cmp:hover{border-color:var(--orange)}
+.store.cmp .act{gap:0}
+.store.cmp .price{font-size:18px}
+.extlinks{margin-top:16px}
+.chip.ext{text-decoration:none;display:inline-flex;align-items:center}

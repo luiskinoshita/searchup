@@ -8,7 +8,7 @@ export async function GET(request) {
   if (!genre) return Response.json({ items: [] });
   try {
     const data = await rakutenGet('https://openapi.rakuten.co.jp/ichibaranking/api/IchibaItem/Ranking/20220601', { genreId: genre }, 3600);
-    const items = (data?.Items || data?.items || []).slice(0, 12).map((raw) => {
+    const items = (data?.Items || data?.items || []).map((raw) => {
       const it = raw.Item || raw.item || raw;
       return {
         rank: it.rank,
@@ -18,7 +18,7 @@ export async function GET(request) {
         image: firstImage(it.mediumImageUrls),
         shop: it.shopName || '',
       };
-    }).filter((i) => i.price && i.url);
+    }).filter((i) => i.price && i.url).sort((a, b) => a.rank - b.rank).slice(0, 12);
     return Response.json({ items, title: data?.title || '' });
   } catch (e) {
     console.error('ranking', e.message);

@@ -9,14 +9,18 @@ export default function AdminTab({ notify }) {
   const [filter, setFilter] = useState('');
   const [reports, setReports] = useState([]);
   const [busy, setBusy] = useState(false);
+  const [blocked, setBlocked] = useState([]);
+  const [blockInput, setBlockInput] = useState('');
 
   const load = useCallback(async () => {
-    const [{ data: e }, { data: r }] = await Promise.all([
+    const [{ data: e }, { data: r }, { data: b }] = await Promise.all([
       supabase.from('allowed_emails').select('email, is_admin, added_at').order('added_at', { ascending: false }),
       supabase.rpc('admin_reports'),
+      supabase.rpc('admin_blocked_users'),
     ]);
     setEmails(e || []);
     setReports(r || []);
+    setBlocked(b || []);
   }, []);
   useEffect(() => { load(); }, [load]);
 
@@ -38,6 +42,16 @@ export default function AdminTab({ notify }) {
     notify('Acesso removido de ' + email);
     load();
   }
+  async function setBlock(email, on) {
+    const clean = String(email || '').trim().toLowerCase();
+    if (!clean) return;
+    const { data, error } = await supabase.rpc('admin_set_blocked', { p_email: clean, p_blocked: on });
+    if (error) { notify('Erro: ' + error.message); return; }
+    notify(data ? (on ? 'Usuário bloqueado: ' : 'Usuário desbloqueado: ') + clean : 'Nenhum usuário com esse e-mail.');
+    setBlockInput('');
+    load();
+  }
+
   async function deleteOffer(id) {
     const { error } = await supabase.from('offers').delete().eq('id', id);
     notify(error ? 'Erro ao apagar.' : 'Oferta apagada');
@@ -60,9 +74,34 @@ export default function AdminTab({ notify }) {
 
   return (
     <div className="stack" style={{ gap: 20 }}>
+      <div className="notice"><b>Acesso aberto (beta):</b> qualquer pessoa que fizer login já usa ofertas, achados, comunidade e mensagens. Para tirar alguém, use “Bloquear usuário” abaixo.</div>
+
       <section className="card stack">
-        <h2 className="h2">Alunos liberados</h2>
-        <p className="small muted" style={{ margin: 0 }}>Cole os e-mails de quem comprou o curso (um por linha, ou separados por vírgula). Quem entrar com um desses e-mails ganha acesso à área exclusiva na hora.</p>
+        <h2 className="h2">Bloquear usuário</h2>
+        <form className="sbox" onSubmit={(e) => { e.preventDefault(); setBlock(blockInput, true); }}>
+          <input type="text" value={blockInput} onChange={(e) => setBlockInput(e.target.value)} placeholder="email@exemplo.com" aria-label="E-mail para bloquear" />
+          <button className="btn danger" type="submit">Bloquear</button>
+        </form>
+        {blocked.length ? (
+          <div className="scrollx">
+            <table className="table">
+              <thead><tr><th>Bloqueados</th><th></th></tr></thead>
+              <tbody>
+                {blocked.map((x) => (
+                  <tr key={x.email}>
+                    <td>{x.name || '—'}<div className="small muted">{x.email}</div></td>
+                    <td><button type="button" className="btn ghost small" onClick={() => setBlock(x.email, false)}>Desbloquear</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : <p className="small muted" style={{ margin: 0 }}>Ninguém bloqueado.</p>}
+      </section>
+
+      <section className="card stack">
+        <h2 className="h2">Lista de alunos do curso</h2>
+        <p className="small muted" style={{ margin: 0 }}>Enquanto o acesso estiver aberto, esta lista não é obrigatória. Ela vai servir quando a assinatura começar (ex.: alunos do curso com acesso garantido).</p>
         <form onSubmit={add} className="stack">
           <label className="field-l" htmlFor="ad-paste">E-mails
             <textarea id="ad-paste" value={paste} onChange={(e) => setPaste(e.target.value)} placeholder={'aluno1@gmail.com\naluno2@yahoo.co.jp'} style={{ minHeight: 110 }} />
@@ -106,6 +145,7 @@ export default function AdminTab({ notify }) {
                       {r.offer_id ? <button type="button" className="btn ghost small danger" onClick={() => deleteOffer(r.offer_id)}>Apagar oferta</button> : null}
                       {r.post_id ? <button type="button" className="btn ghost small danger" onClick={() => deletePost(r.post_id)}>Apagar post</button> : null}
                       {r.find_id ? <button type="button" className="btn ghost small danger" onClick={() => deleteFind(r.find_id)}>Apagar achado</button> : null}
+                      {r.target_email ? <button type="button" className="btn ghost small danger" onClick={() => setBlock(r.target_email, true)}>Bloquear usuário</button> : null}
                     </td>
                   </tr>
                 ))}
@@ -113,7 +153,6 @@ export default function AdminTab({ notify }) {
             </table>
           </div>
         ) : <div className="empty">Nenhuma denúncia.</div>}
-        <p className="small muted" style={{ margin: 0 }}>Para bloquear alguém, remova o e-mail da lista de alunos liberados.</p>
       </section>
     </div>
   );

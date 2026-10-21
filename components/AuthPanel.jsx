@@ -47,7 +47,7 @@ export default function AuthPanel({ title = 'Entrar no SnagMap', intro }) {
       {intro ? <p className="small muted" style={{ margin: 0 }}>{intro}</p> : null}
       {step === 'email' ? (
         <form onSubmit={send} className="stack">
-          <label className="field-l" htmlFor="auth-email">E-mail usado na compra do curso
+          <label className="field-l" htmlFor="auth-email">Seu e-mail
             <input id="auth-email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="voce@exemplo.com" />
           </label>
           {err ? <p className="err">{err}</p> : null}

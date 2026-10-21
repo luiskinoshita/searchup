@@ -154,7 +154,7 @@ export default function Home() {
   } else if (!ready) {
     content = <div className="empty">Carregando…</div>;
   } else if (!session) {
-    content = <AuthPanel title="Área exclusiva para alunos" intro="Entre com o e-mail usado na compra do curso Do Japão para o Mundo para ver ofertas dos alunos, a comunidade e as mensagens." />;
+    content = <AuthPanel title="Entre na comunidade SnagMap" intro="É grátis no beta: entre com seu e-mail para ver as ofertas da comunidade, compartilhar achados e conversar com outros revendedores." />;
   } else if (!status) {
     content = <div className="empty">Carregando sua conta…</div>;
   } else if (tab === 'admin' && isAdmin) {
@@ -162,9 +162,9 @@ export default function Home() {
   } else if (!isStudent) {
     content = (
       <div className="locked">
-        <span className="eyebrow">Acesso não liberado</span>
-        <h2 className="h2">Este e-mail não está na lista de alunos</h2>
-        <p className="muted" style={{ margin: 0 }}>Você entrou como <b>{status.email}</b>. Se você comprou o curso com outro e-mail, saia e entre com ele. Se acabou de comprar, peça a liberação ao suporte do curso.</p>
+        <span className="eyebrow">Acesso suspenso</span>
+        <h2 className="h2">Sua conta está sem acesso à comunidade</h2>
+        <p className="muted" style={{ margin: 0 }}>Você entrou como <b>{status.email}</b>. Se acha que isso é um engano, escreva para <a href="mailto:contact@snagmaps.com">contact@snagmaps.com</a>.</p>
         <button className="btn" type="button" onClick={signOut}>Sair e usar outro e-mail</button>
       </div>
     );
@@ -201,7 +201,7 @@ export default function Home() {
               <button className="btn ghost small" type="button" onClick={signOut}>Sair</button>
             </>
           ) : supabase ? (
-            <button className="btn small" type="button" onClick={() => go('ofertas')}>Entrar (alunos)</button>
+            <button className="btn small" type="button" onClick={() => go('ofertas')}>Entrar</button>
           ) : null}
         </div>
       </header>
@@ -229,7 +229,7 @@ export default function Home() {
               {(() => { const I = TAB_ICONS[k]; return I ? <I /> : null; })()}
               <span className={short ? 'lbl-long' : undefined}>{l}</span>
               {short ? <span className="lbl-short">{short}</span> : null}
-              {STUDENT_TABS.includes(k) && !isStudent ? <span className="lock">(alunos)</span> : null}
+              {STUDENT_TABS.includes(k) && !session ? <span className="lock">(entrar)</span> : null}
               {k === 'mensagens' && incoming ? <span className="badge">{incoming}</span> : null}
             </button>
           ))}
@@ -247,7 +247,8 @@ export default function Home() {
 
       <footer className="foot">
         <span><b style={{ color: 'var(--fg)' }}>SnagMap</b> · Ache ofertas. Compartilhe achados. <span className="hl">Revenda melhor.</span></span>
-        <span>Acordos de compra e pagamento entre alunos são de responsabilidade deles. O SnagMap não intermedia dinheiro.</span>
+        <span>Acordos de compra e pagamento entre usuários são de responsabilidade deles. O SnagMap não intermedia dinheiro.</span>
+        <span>Contato: <a href="mailto:contact@snagmaps.com">contact@snagmaps.com</a></span>
         <span>
           <a href="https://webservice.rakuten.co.jp/" target="_blank" rel="noopener noreferrer">Supported by Rakuten Developers</a>
           {' · Lojas: '}<span translate="no">Google Maps</span>

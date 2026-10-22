@@ -1,10 +1,10 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
-import { supabase, PROFILE_COLUMNS } from '@/lib/supabase';
+import { supabase, PROFILE_COLUMNS, linkType } from '@/lib/supabase';
 import { CITIES } from '@/lib/constants';
 import { readLS, writeLS } from '@/lib/util';
 import { Toast } from '@/components/ui';
-import AuthPanel from '@/components/AuthPanel';
+import AuthPanel, { NewPasswordPanel } from '@/components/AuthPanel';
 import SearchTab from '@/components/SearchTab';
 import OffersTab from '@/components/OffersTab';
 import OfferForm from '@/components/OfferForm';
@@ -36,6 +36,7 @@ export default function Home() {
   const [findsReload, setFindsReload] = useState(0);
   const [toast, setToast] = useState('');
   const [gpsBusy, setGpsBusy] = useState(false);
+  const [recovery, setRecovery] = useState(false);
 
   const notify = useCallback((m) => {
     setToast(m);
@@ -57,8 +58,8 @@ export default function Home() {
       if (t.includes('error_description=')) {
         const p = new URLSearchParams(t);
         setToast(/expired|invalid/i.test(p.get('error_code') || p.get('error_description') || '')
-          ? 'O link de login expirou ou já foi usado. Peça um novo.'
-          : 'Não foi possível entrar pelo link. Peça um novo.');
+          ? 'Esse link do e-mail expirou ou já foi usado. Tente entrar com e-mail e senha ou peça outro link.'
+          : 'Não foi possível abrir o link do e-mail. Tente entrar com e-mail e senha.');
         history.replaceState(null, '', window.location.pathname);
       }
     };
@@ -72,10 +73,17 @@ export default function Home() {
   // sessão
   useEffect(() => {
     if (!supabase) { setReady(true); return; }
-    supabase.auth.getSession().then(({ data }) => { setSession(data.session); setReady(true); });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
+    if (linkType === 'recovery') { setRecovery(true); setTab('perfil'); }
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session); setReady(true);
+      if (data.session && linkType === 'signup') notify('E-mail confirmado! Bem-vindo ao SnagMap 🎉');
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((e, s) => {
+      setSession(s);
+      if (e === 'PASSWORD_RECOVERY') { setRecovery(true); setTab('perfil'); }
+    });
     return () => sub.subscription.unsubscribe();
-  }, []);
+  }, [notify]);
 
   const userId = session?.user?.id || null;
   const isStudent = !!status?.is_student;
@@ -153,8 +161,10 @@ export default function Home() {
     content = <div className="empty">O SnagMap ainda não foi conectado ao banco de dados. Configure as variáveis do Supabase na Vercel.</div>;
   } else if (!ready) {
     content = <div className="empty">Carregando…</div>;
+  } else if (session && recovery) {
+    content = <NewPasswordPanel onDone={() => { setRecovery(false); notify('Senha nova salva!'); go('ofertas'); }} />;
   } else if (!session) {
-    content = <AuthPanel title="Entre na comunidade SnagMap" intro="É grátis no beta: entre com seu e-mail para ver as ofertas da comunidade, compartilhar achados e conversar com outros revendedores." />;
+    content = <AuthPanel title="Entre na comunidade SnagMap" intro="É grátis no beta: crie sua conta para ver as ofertas da comunidade, compartilhar achados e conversar com outros revendedores." />;
   } else if (!status) {
     content = <div className="empty">Carregando sua conta…</div>;
   } else if (tab === 'admin' && isAdmin) {

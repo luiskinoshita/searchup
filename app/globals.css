@@ -92,8 +92,8 @@ main{padding-top:18px}
 .pill.hot{background:var(--orange);color:#fff}
 .pill.warn{background:var(--orange);color:#fff;font-weight:700}
 .pill.brand{background:var(--peach);color:var(--orange-deep)}
-input[type=text],input[type=email],input[type=number],select.field,textarea{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:9px 12px;color:var(--fg)}
-input[type=text]:focus,input[type=email]:focus,input[type=number]:focus,textarea:focus,select.field:focus{border-color:var(--orange);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--orange) 18%,transparent)}
+input[type=text],input[type=email],input[type=password],input[type=number],select.field,textarea{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:9px 12px;color:var(--fg)}
+input[type=text]:focus,input[type=email]:focus,input[type=password]:focus,input[type=number]:focus,textarea:focus,select.field:focus{border-color:var(--orange);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--orange) 18%,transparent)}
 textarea{resize:vertical;min-height:70px}
 .field-l{display:grid;gap:4px;font-size:13px;font-weight:500}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -190,6 +190,11 @@ textarea{resize:vertical;min-height:70px}
 
 .locked{max-width:520px;margin:24px auto;text-align:center;padding:26px 22px;display:grid;gap:12px;justify-items:center}
 .authbox{max-width:420px;margin:24px auto;display:grid;gap:12px}
+.authbox .ok{color:var(--ok)}
+.pwbox{position:relative;display:block}
+.pwbox input{width:100%;padding-right:84px}
+.pwtoggle{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:var(--orange-deep);font-size:12px;font-weight:600;padding:6px 8px;border-radius:8px}
+.pwtoggle:hover{background:var(--peach)}
 .code{letter-spacing:.4em;font-size:22px!important;text-align:center;font-weight:700}
 
 .scrim{position:fixed;inset:0;background:rgba(17,24,39,.55);display:grid;place-items:center;z-index:20;

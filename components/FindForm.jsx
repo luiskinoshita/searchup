@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { CATEGORIES } from '@/lib/constants';
 import { compressImage } from '@/lib/util';
 import { Modal } from './ui';
+import PhotoPicker from './PhotoPicker';
 
 export default function FindForm({ initialKind = 'loja', loc, userId, onClose, onSaved }) {
   const [kind, setKind] = useState(initialKind);
@@ -106,9 +107,10 @@ export default function FindForm({ initialKind = 'loja', loc, userId, onClose, o
           <textarea id="fd-note" value={note} maxLength={1000} onChange={(e) => setNote(e.target.value)}
             placeholder={kind === 'loja' ? 'O que tem de bom, horário, se faz sorteio (抽選)…' : 'Por que vale a pena, data de lançamento, onde vende melhor…'} />
         </label>
-        <label className="field-l" htmlFor="fd-photo">Foto (opcional)
-          <input id="fd-photo" type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; setFile(f || null); setPreview(f ? URL.createObjectURL(f) : ''); }} />
-        </label>
+        <div className="field-l">Foto (opcional)
+          <PhotoPicker hasFile={!!file} onPick={(f) => { setFile(f); setPreview(URL.createObjectURL(f)); }} />
+          {file ? <button type="button" className="btn ghost small" style={{ justifySelf: 'start' }} onClick={() => { setFile(null); setPreview(''); }}>Remover foto</button> : null}
+        </div>
         {preview ? <img className="photo" src={preview} alt="Prévia da foto" /> : null}
         {err ? <p className="err">{err}</p> : null}
         <div className="row" style={{ justifyContent: 'flex-end' }}>

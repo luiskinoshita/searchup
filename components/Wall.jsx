@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { CATEGORIES } from '@/lib/constants';
 import { ago, compressImage, firstName } from '@/lib/util';
 import { Avatar } from './ui';
+import PhotoPicker, { imageFromPaste } from './PhotoPicker';
 
 export default function Wall({ userId, isAdmin, myProfile, onTalk, notify }) {
   const [cat, setCat] = useState('Todas');
@@ -83,14 +84,14 @@ export default function Wall({ userId, isAdmin, myProfile, onTalk, notify }) {
       <form className="card stack" onSubmit={publish} style={{ marginTop: 12 }}>
         <label className="field-l" htmlFor="wall-body">Compartilhe com os alunos
           <textarea id="wall-body" value={body} maxLength={1000} onChange={(e) => setBody(e.target.value)}
+            onPaste={(e) => { const f = imageFromPaste(e); if (f) { e.preventDefault(); pick(f); } }}
             placeholder="Mostre suas compras, peça dicas ou procure parceiros. Ex: Alguém vai em Akihabara sábado? Divido o frete." />
         </label>
         {preview ? <img className="photo" src={preview} alt="Prévia da foto" /> : null}
         <div className="row between">
           <div className="row">
-            <input ref={fileRef} id="wall-file" type="file" accept="image/*" hidden onChange={(e) => pick(e.target.files?.[0])} />
-            <button type="button" className="btn" onClick={() => fileRef.current?.click()}>{file ? 'Trocar foto' : 'Adicionar foto'}</button>
-            {file ? <button type="button" className="btn ghost small" onClick={() => { pick(null); if (fileRef.current) fileRef.current.value = ''; }}>Remover foto</button> : null}
+            <PhotoPicker onPick={pick} hasFile={!!file} dropHint={false} />
+            {file ? <button type="button" className="btn ghost small" onClick={() => pick(null)}>Remover foto</button> : null}
             <select className="field" style={{ width: 'auto' }} value={postCat} onChange={(e) => setPostCat(e.target.value)} aria-label="Categoria do post">
               {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
             </select>

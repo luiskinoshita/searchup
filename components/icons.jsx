@@ -13,3 +13,6 @@ export const TAB_ICONS = {
   buscar: IconSearch, ofertas: IconTag, achados: IconPin, comunidade: IconUsers,
   mensagens: IconChat, perfil: IconUser, admin: IconShield,
 };
+
+export const IconCamera = () => (<svg {...P}><path d="M4 8h3l2-3h6l2 3h3v11H4V8Z" /><circle cx="12" cy="13" r="3.5" /></svg>);
+export const IconImage = () => (<svg {...P}><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="8.5" cy="9.5" r="1.8" /><path d="m21 16-5-5-8 9" /></svg>);

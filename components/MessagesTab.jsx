@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ago, compressImage, feeText, firstName } from '@/lib/util';
 import { Avatar } from './ui';
+import PhotoPicker, { imageFromPaste } from './PhotoPicker';
 
 const MSG_COLS = 'id, sender_id, body, image_path, created_at';
 
@@ -148,9 +149,9 @@ export default function MessagesTab({ userId, threads, selectedId, onSelect, onC
               <div className="reqbox"><p className="small muted" style={{ margin: 0 }}>{firstName(t.other_name)} não aceitou a conversa.</p></div>
             ) : (
               <form className="chatin" onSubmit={send}>
-                <input ref={fileRef} id="chatfile" type="file" accept="image/*" hidden onChange={(e) => sendPhoto(e.target.files?.[0])} />
-                <button className="btn" type="button" onClick={() => fileRef.current?.click()} disabled={sending} aria-label="Enviar foto">Foto</button>
-                <input id="chatmsg" type="text" value={text} onChange={(e) => setText(e.target.value)} placeholder="Escreva uma mensagem" aria-label="Mensagem" autoComplete="off" maxLength={2000} />
+                <PhotoPicker compact onPick={sendPhoto} disabled={sending} />
+                <input id="chatmsg" type="text" value={text} onChange={(e) => setText(e.target.value)}
+                  onPaste={(e) => { const f = imageFromPaste(e); if (f) { e.preventDefault(); sendPhoto(f); } }} placeholder="Escreva uma mensagem" aria-label="Mensagem" autoComplete="off" maxLength={2000} />
                 <button className="btn primary" type="submit" disabled={sending}>Enviar</button>
               </form>
             )}

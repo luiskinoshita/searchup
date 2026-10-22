@@ -272,3 +272,9 @@ textarea{resize:vertical;min-height:70px}
 .store.cmp .price{font-size:18px}
 .extlinks{margin-top:16px}
 .chip.ext{text-decoration:none;display:inline-flex;align-items:center}
+
+/* escolher foto */
+.picker{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px;border:1px dashed transparent;border-radius:12px}
+.picker.over{border-color:var(--orange);background:var(--peach)}
+.picker .btn svg,.iconbtn svg{width:18px;height:18px}
+.iconbtn{padding:7px 9px;flex:none}

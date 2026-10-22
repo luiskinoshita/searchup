@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { CATEGORIES, STORE_TYPES } from '@/lib/constants';
 import { compressImage, fkm } from '@/lib/util';
 import { Modal } from './ui';
+import PhotoPicker from './PhotoPicker';
 
 export default function OfferForm({ draft, loc, userId, onClose, onSaved }) {
   const [product, setProduct] = useState(draft?.product || '');
@@ -124,9 +125,10 @@ export default function OfferForm({ draft, loc, userId, onClose, onSaved }) {
         <label className="field-l" htmlFor="of-note">Dica para os outros
           <textarea id="of-note" value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} placeholder="Onde fica na loja, limite por pessoa, se é sorteio (抽選)…" />
         </label>
-        <label className="field-l" htmlFor="of-photo">Foto da etiqueta (opcional)
-          <input id="of-photo" type="file" accept="image/*" onChange={(e) => { const f = e.target.files?.[0]; setFile(f || null); setPreview(f ? URL.createObjectURL(f) : ''); }} />
-        </label>
+        <div className="field-l">Foto da etiqueta ou do produto (opcional)
+          <PhotoPicker hasFile={!!file} onPick={(f) => { setFile(f); setPreview(URL.createObjectURL(f)); }} />
+          {file ? <button type="button" className="btn ghost small" style={{ justifySelf: 'start' }} onClick={() => { setFile(null); setPreview(''); }}>Remover foto</button> : null}
+        </div>
         {preview ? <img className="photo" src={preview} alt="Prévia da foto" /> : null}
         <div className="field-l">Quando liberar para os outros
           <div className="opts">
